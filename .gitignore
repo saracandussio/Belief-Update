@@ -14,3 +14,7 @@ slurm_outputs/
 *.sif
 .containers/
 .hf_cache/
+# symlinks into the share (Demetra)
+.venv
+data
+outputs

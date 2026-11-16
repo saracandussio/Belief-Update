@@ -17,18 +17,19 @@
 # index ~65GB, does not fit on the GPU next to the model), hence --mem=160G.
 #
 # One-time setup (login node):
-#   git clone https://github.com/PeterGriffinJin/Search-R1.git /u/scandussio/Search-R1
-#   conda create -n retriever python=3.10 -y && conda activate retriever
+#   git clone https://github.com/PeterGriffinJin/Search-R1.git /share/ai-lab/scandussio/Search-R1
+#   conda create -p /share/ai-lab/scandussio/envs/retriever python=3.10 -y && conda activate /share/ai-lab/scandussio/envs/retriever
 #   pip install torch transformers datasets faiss-cpu fastapi uvicorn huggingface_hub
-#   python /u/scandussio/Search-R1/scripts/download.py --save_path /u/scandussio/search-r1-index
-#   cd /u/scandussio/search-r1-index && cat part_* > e5_Flat.index && gzip -d wiki-18.jsonl.gz
+#   python /share/ai-lab/scandussio/Search-R1/scripts/download.py --save_path /share/ai-lab/scandussio/search-r1-index
+#   cd /share/ai-lab/scandussio/search-r1-index && cat part_* > e5_Flat.index && gzip -d wiki-18.jsonl.gz
 # Submit:  sbatch slurm/demetra_search.sh      (single task: --array=0)
 
 set -euo pipefail
+source /u/scandussio/Belief-Update/slurm/demetra_env.sh
 
 PROJECT_PATH="/u/scandussio/Belief-Update"
-RETRIEVER_REPO="${RETRIEVER_REPO:-/u/scandussio/Search-R1}"
-INDEX_DIR="${INDEX_DIR:-/u/scandussio/search-r1-index}"
+RETRIEVER_REPO="${RETRIEVER_REPO:-/share/ai-lab/scandussio/Search-R1}"
+INDEX_DIR="${INDEX_DIR:-/share/ai-lab/scandussio/search-r1-index}"
 RET_PORT="${RET_PORT:-8000}"
 
 MODELS=("Qwen/Qwen3.8-27B" "openai/gpt-oss-20b")
@@ -45,7 +46,7 @@ echo "Task $TASK_ID  Model: $MODEL  Dataset: $DATASET"
 (
     cd "$RETRIEVER_REPO"
     source "$(conda info --base)/etc/profile.d/conda.sh"
-    conda activate "${RETRIEVER_ENV:-retriever}"
+    conda activate "${RETRIEVER_ENV:-/share/ai-lab/scandussio/envs/retriever}"
     CUDA_VISIBLE_DEVICES="" python search_r1/search/retrieval_server.py \
         --index_path "$INDEX_DIR/e5_Flat.index" \
         --corpus_path "$INDEX_DIR/wiki-18.jsonl" \
@@ -56,7 +57,6 @@ trap 'kill $RET_PID 2>/dev/null || true' EXIT
 
 cd "$PROJECT_PATH"
 source .venv/bin/activate
-export TOKENIZERS_PARALLELISM=false
 export NO_PROXY="127.0.0.1,localhost${NO_PROXY:+,$NO_PROXY}"
 
 echo "Waiting for retriever on :$RET_PORT (loading the index takes a while) ..."

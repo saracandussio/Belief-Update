@@ -22,11 +22,11 @@
 # One task: sbatch --array=4 slurm/demetra_closed.sh
 
 set -euo pipefail
+source /u/scandussio/Belief-Update/slurm/demetra_env.sh
 
 PROJECT_PATH="/u/scandussio/Belief-Update"
 cd "$PROJECT_PATH"
 source .venv/bin/activate
-export TOKENIZERS_PARALLELISM=false
 
 MODELS=("Qwen/Qwen3.8-27B" "openai/gpt-oss-20b")
 DATASETS=("2wiki" "musique" "hotpotqa" "bamboogle")

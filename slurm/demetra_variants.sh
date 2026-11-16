@@ -18,11 +18,11 @@
 # Submit:  sbatch slurm/demetra_variants.sh
 
 set -euo pipefail
+source /u/scandussio/Belief-Update/slurm/demetra_env.sh
 
 PROJECT_PATH="/u/scandussio/Belief-Update"
 cd "$PROJECT_PATH"
 source .venv/bin/activate
-export TOKENIZERS_PARALLELISM=false
 
 DATASETS="${DATASETS:-2wiki,musique,hotpotqa,bamboogle}"
 MAX_QUESTIONS="${MAX_QUESTIONS:-500}"
