@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "belief-update"
+version = "0.1.0"
+description = "Belief update in search agents: parametric-knowledge baselines on multi-hop QA"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "datasets>=4.4",
+    "fire>=0.7",
+    "numpy>=1.26",
+    "requests>=2.31",
+    "tqdm>=4.66",
+    "transformers>=4.57",
+]
+
+[project.optional-dependencies]
+vllm = ["vllm>=0.12"]
+api = ["openai>=1.50"]
+dev = ["pytest>=8", "ruff>=0.12"]
+
+[tool.setuptools.packages.find]
+include = ["belief_update*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff.lint.per-file-ignores]
+# prompt templates and test fixtures keep long literal strings on one line
+"belief_update/variants.py" = ["E501"]
+"belief_update/judge.py" = ["E501"]
+"tests/*" = ["E501"]
