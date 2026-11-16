@@ -15,7 +15,12 @@ import json
 from typing import Optional
 
 from belief_update.shared.metrics import cover_em, em, normalize_answer
-from belief_update.utils import native_decomposition, normalize_question, question_type
+from belief_update.utils import (
+    native_decomposition,
+    normalize_question,
+    question_type,
+    supporting_sentences,
+)
 
 VARIANTS_PROMPT = """You are preparing controlled test material for a study of multi-hop question answering.
 
@@ -52,6 +57,13 @@ def build_variants_prompt(item: dict, k: int) -> str:
     evid = (item.get("metadata") or {}).get("evidences")
     if evid:
         extra_lines.append("Evidence triples: " + json.dumps(evid, ensure_ascii=False))
+    support = supporting_sentences(item)
+    if support and not native:
+        extra_lines.append(
+            "Gold supporting sentences from the dataset (use them to fix the intermediate "
+            "answers; do not copy their wording into the questions):\n"
+            + "\n".join(f"  - {s}" for s in support)
+        )
     extra = ("\n".join(extra_lines) + "\n") if extra_lines else ""
     return VARIANTS_PROMPT.format(
         question=item["question"],
@@ -71,7 +83,7 @@ def validate_variants(item: dict, out: Optional[dict], k: int) -> dict:
         "question": item["question"],
         "golden_answers": item["golden_answers"],
         "type": question_type(item),
-        "hops_source": "native" if native else "llm",
+        "hops_source": "native" if native else ("llm+support" if supporting_sentences(item) else "llm"),
         "chain": None,
         "hops": [],
         "paraphrases": [],

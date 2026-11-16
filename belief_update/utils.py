@@ -319,6 +319,42 @@ def resolve_placeholders(question: str, previous_answers: list[str]) -> str:
     return re.sub(r"#(\d+)", sub, question)
 
 
+def supporting_sentences(item: dict, max_chars: int = 3000) -> list[str]:
+    """Gold supporting sentences (HotpotQA / 2Wiki style), as "Title: sentence".
+
+    Accepts both layouts found in HF exports:
+    - context = {"title": [...], "sentences": [[...], ...]} or [[title, [sents]], ...]
+    - supporting_facts = {"title": [...], "sent_id": [...]} or [[title, sent_id], ...]
+    Returns [] if the fields are missing or malformed.
+    """
+    meta = item.get("metadata") or {}
+    ctx, sf = meta.get("context"), meta.get("supporting_facts")
+    if not ctx or not sf:
+        return []
+    try:
+        if isinstance(ctx, dict):
+            paras = dict(zip(ctx["title"], ctx.get("sentences") or ctx["content"]))
+        else:
+            paras = {t: sents for t, sents in ctx}
+        if isinstance(sf, dict):
+            facts = list(zip(sf["title"], sf["sent_id"]))
+        else:
+            facts = [(t, i) for t, i in sf]
+    except (KeyError, TypeError, ValueError):
+        return []
+    out, total = [], 0
+    for title, idx in facts:
+        sents = paras.get(title)
+        if sents is None or not (0 <= int(idx) < len(sents)):
+            continue
+        line = f"{title}: {str(sents[int(idx)]).strip()}"
+        total += len(line)
+        if total > max_chars:
+            break
+        out.append(line)
+    return out
+
+
 def question_type(item: dict) -> Optional[str]:
     meta = item.get("metadata") or {}
     return meta.get("type")

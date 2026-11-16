@@ -43,3 +43,22 @@ def test_build_units():
     assert h_units[0]["golds"] == ["Texas"]
     assert build_units([ITEM], None, "hops") == []
     assert len(build_units([ITEM], None, "question")) == 1
+
+
+def test_supporting_sentences_both_layouts():
+    from belief_update.utils import supporting_sentences
+    dict_layout = {"metadata": {
+        "context": {"title": ["Dallas", "Texas"],
+                    "sentences": [["Dallas is a city.", "It is in Texas."], ["Austin is the capital."]]},
+        "supporting_facts": {"title": ["Dallas", "Texas"], "sent_id": [1, 0]}}}
+    list_layout = {"metadata": {
+        "context": [["Dallas", ["Dallas is a city.", "It is in Texas."]], ["Texas", ["Austin is the capital."]]],
+        "supporting_facts": [["Dallas", 1], ["Texas", 0], ["Missing", 0], ["Texas", 9]]}}
+    expected = ["Dallas: It is in Texas.", "Texas: Austin is the capital."]
+    assert supporting_sentences(dict_layout) == expected
+    assert supporting_sentences(list_layout) == expected
+    assert supporting_sentences({"metadata": {"type": "x"}}) == []
+    item = {**ITEM, "metadata": dict_layout["metadata"]}
+    prompt = build_variants_prompt(item, 3)
+    assert "Gold supporting sentences" in prompt and "Austin is the capital." in prompt
+    assert validate_variants(item, OUT, k=3)["hops_source"] == "llm+support"
