@@ -19,7 +19,6 @@ dependencies = [
 
 [project.optional-dependencies]
 vllm = ["vllm>=0.12"]
-api = ["openai>=1.50"]
 dev = ["pytest>=8", "ruff>=0.12"]
 
 [tool.setuptools.packages.find]

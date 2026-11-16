@@ -15,7 +15,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 VLLM_PYTHON="${VLLM_PYTHON:-python}"
-API_PYTHON="${API_PYTHON:-python}"
+API_PYTHON="${API_PYTHON:-python}"   # CPU-only stages (data, analyze)
 # Subject models, comma-separated. MODEL is kept as an alias for a single model.
 MODELS="${MODELS:-${MODEL:-Qwen/Qwen3.8-27B,openai/gpt-oss-20b}}"
 CHAT_TEMPLATE_KWARGS="${CHAT_TEMPLATE_KWARGS:-}"   # JSON, e.g. '{"reasoning_effort": "medium"}'
@@ -26,8 +26,8 @@ MAX_QUESTIONS="${MAX_QUESTIONS:-500}"
 SEED="${SEED:-0}"
 NUM_OUT="${NUM_OUT:-8}"
 NUM_PARAPHRASES="${NUM_PARAPHRASES:-3}"
-WRITER_MODEL="${WRITER_MODEL:-}"     # stronger model for variants (OpenAI-compatible endpoint)
-JUDGE_MODEL="${JUDGE_MODEL:-}"       # judge (OpenAI-compatible endpoint)
+WRITER_MODEL="${WRITER_MODEL:-openai/gpt-oss-120b}"  # stronger model for variants (offline vLLM)
+JUDGE_MODEL="${JUDGE_MODEL:-openai/gpt-oss-120b}"    # judge (offline vLLM)
 RETRIEVER_URL="${RETRIEVER_URL:-http://127.0.0.1:8000/retrieve}"
 TOOL_FORMAT="${TOOL_FORMAT:-}"       # qwen_native | searchr1 (default: from model name)
 TP="${TP:-1}"
@@ -50,8 +50,7 @@ for dataset in "${dataset_list[@]}"; do
             --max_questions "$MAX_QUESTIONS" --seed "$SEED"
     fi
     if contains_stage variants; then
-        [[ -z "$WRITER_MODEL" ]] && { echo "Set WRITER_MODEL for the variants stage"; exit 1; }
-        "$API_PYTHON" scripts/make_variants.py --data_name "$dataset" \
+        "$VLLM_PYTHON" scripts/make_variants.py --data_name "$dataset" \
             --writer_model "$WRITER_MODEL" --num_paraphrases "$NUM_PARAPHRASES"
     fi
     for MODEL in "${model_list[@]}"; do
@@ -72,8 +71,7 @@ for dataset in "${dataset_list[@]}"; do
                 --tensor_parallel_size "$TP" "${tool_args[@]}" "${gen_args[@]}"
         fi
         if contains_stage judge; then
-            [[ -z "$JUDGE_MODEL" ]] && { echo "Set JUDGE_MODEL for the judge stage"; exit 1; }
-            "$API_PYTHON" scripts/judge_answers.py --model_name "$MODEL" --data_name "$dataset" \
+            "$VLLM_PYTHON" scripts/judge_answers.py --model_name "$MODEL" --data_name "$dataset" \
                 --judge_model "$JUDGE_MODEL"
         fi
         if contains_stage analyze; then
