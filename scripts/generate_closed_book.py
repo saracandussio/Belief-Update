@@ -110,7 +110,7 @@ def main(
     max_questions: Optional[int] = None,
     tensor_parallel_size: int = 1,
     quantization: Optional[str] = None,
-    max_model_len: Optional[int] = None,
+    max_model_len: Optional[int] = 16384,  # prompt + 8192 generated tokens
     chat_template_kwargs: Optional[dict] = None,  # e.g. {"reasoning_effort": "medium"}
     llm_kwargs: Optional[dict] = None,  # passed to vllm.LLM
     **gen_kwargs,
