@@ -28,7 +28,7 @@ def result_files(data_dir: Path, model_name: str) -> list[Path]:
 
 
 def main(model_name: str = "Qwen/Qwen3.8-27B", data_name: str = "2wiki",
-         judge_model: str = None, max_workers: int = 16):
+         judge_model: str = None, max_workers: int = 16, max_tokens: int = 2048):
     if judge_model is None:
         raise ValueError("Pass --judge_model (served at OPENAI_BASE_URL).")
     data_dir = Path("./data") / dataset_short_name(data_name)
@@ -42,7 +42,7 @@ def main(model_name: str = "Qwen/Qwen3.8-27B", data_name: str = "2wiki",
                 triples[key] = {"uid": key, "question": r["question"], "golds": r["golds"],
                                 "pred": pred}
     print(f"{len(triples)} distinct non-EM predictions to judge")
-    chat = make_chat_fn(judge_model, temperature=0.0, max_tokens=8)
+    chat = make_chat_fn(judge_model, temperature=0.0, max_tokens=max_tokens)
 
     def work(u):
         raw = chat(build_judge_prompt(u["question"], u["golds"], u["pred"]))

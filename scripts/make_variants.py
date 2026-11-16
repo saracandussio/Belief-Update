@@ -26,13 +26,14 @@ def main(
     num_paraphrases: int = 3,
     max_workers: int = 16,
     temperature: float = 0.7,
+    max_tokens: int = 8192,  # reasoning writers (e.g. gpt-oss) spend tokens before the JSON
 ):
     if writer_model is None:
         raise ValueError("Pass --writer_model (served at OPENAI_BASE_URL).")
     data_dir = Path("./data") / dataset_short_name(data_name)
     with open(data_dir / "items.json") as f:
         items = json.load(f)
-    chat = make_chat_fn(writer_model, temperature=temperature, max_tokens=4096)
+    chat = make_chat_fn(writer_model, temperature=temperature, max_tokens=max_tokens)
 
     def work(unit):
         raw = chat(build_variants_prompt(unit["item"], num_paraphrases))
