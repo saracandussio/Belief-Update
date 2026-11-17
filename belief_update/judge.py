@@ -10,7 +10,17 @@ from __future__ import annotations
 from typing import Optional
 
 JUDGE_PROMPT = """Decide whether the predicted answer to the question is correct, given the gold answer(s).
-Count it as correct if it refers to the same entity, date or value as a gold answer, even with different wording, an alias, or a more or less specific but compatible form (e.g. "1999" vs "May 1999"). Count it as incorrect if it is a different entity, contradicts the gold answer, or is too vague to identify it.
+
+Correct only if the prediction identifies the same entity, date or value as a gold answer. Allowed:
+- aliases, translations or transliterations of the same name, and titles or honorifics ("Sir Nicholas Bacon" vs "Nicholas Bacon");
+- extra detail that is consistent with the gold ("MECC (Minnesota Educational Computing Consortium)");
+- a coarser or finer form of the same date, or a small rounding of the same number ("1999" vs "May 1999", "11" vs "10.8").
+
+Incorrect if:
+- it names a different person, even when part of the name matches (a different given name, a relative with the same surname, the subject of the question instead of the person asked about);
+- it is a range or a list of options, unless every option matches the gold;
+- it is a more generic category than the gold ("merchant" for "wool merchant") or a different specific one;
+- it contradicts the gold, or is too vague to identify it.
 
 Question: {question}
 Gold answer(s): {golds}
